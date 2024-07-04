@@ -1,6 +1,6 @@
-# DejenDog - Auto Claim Bot
+# DejenDog (HashKey) - Auto Claim Bot
 
-Referral link: [DejenDog](https://t.me/DejenDogBot?start=c67d6906)
+Referral link: [DejenDog (HashKey)](https://t.me/DejenDogBot?start=c67d6906)
 
 ## Telegram Group
 
