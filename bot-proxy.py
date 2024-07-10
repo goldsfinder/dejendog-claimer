@@ -64,6 +64,32 @@ class DejenDog:
         else:
             _ = os.system("clear")
 
+    def login(self, data, proxy_info):
+        url = f"https://api.djdog.io/telegram/login?{data}"
+
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "Origin": "https://djdog.io",
+            "Pragma": "no-cache",
+            "Priority": "u=1, i",
+            "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        }
+
+        proxies = self.proxies(proxy_info=proxy_info)
+
+        response = requests.get(url=url, headers=headers, proxies=proxies)
+
+        return response
+
     def user_info(self, auth_data, proxy_info):
         url = f"https://api.djdog.io/pet/barAmount"
 
@@ -111,7 +137,7 @@ class DejenDog:
             for no, account in enumerate(accounts):
                 self.log(self.line)
                 self.log(f"{green}Account number: {white}{no+1}/{num_acc}")
-                auth_data = account["acc_info"]
+                data = account["acc_info"]
                 proxy_info = account["proxy_info"]
                 parsed_proxy_info = self.parse_proxy_info(proxy_info)
                 if parsed_proxy_info is None:
@@ -123,6 +149,8 @@ class DejenDog:
                 self.log(f"{green}IP Address: {white}{ip_adress}")
 
                 try:
+                    login = self.login(data=data, proxy_info=proxy_info).json()
+                    auth_data = login["data"]["accessToken"]
                     user_info = self.user_info(
                         auth_data=auth_data, proxy_info=proxy_info
                     ).json()
