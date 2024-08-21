@@ -1,11 +1,11 @@
 {
   "accounts": [
     {
-      "acc_info": "query_id=",
+      "acc_info": "",
       "proxy_info": "http://user:pass@ip:port"
     },
     {
-      "acc_info": "query_id=",
+      "acc_info": "",
       "proxy_info": "http://user:pass@ip:port"
     }
   ]

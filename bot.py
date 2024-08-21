@@ -1,170 +1,115 @@
-import os
 import sys
+
+sys.dont_write_bytecode = True
+
+from smart_airdrop_claimer import base
+from core.token import get_token
+from core.info import get_info
+from core.task import process_check_in, process_do_task
+from core.claim import process_claim
+from core.upgrade import process_buy_box, process_buy_boost
+
 import time
-import requests
-from colorama import *
-from datetime import datetime
-import random
-
-red = Fore.LIGHTRED_EX
-yellow = Fore.LIGHTYELLOW_EX
-green = Fore.LIGHTGREEN_EX
-black = Fore.LIGHTBLACK_EX
-blue = Fore.LIGHTBLUE_EX
-white = Fore.LIGHTWHITE_EX
-reset = Style.RESET_ALL
-
-# Get the directory where the script is located
-script_dir = os.path.dirname(os.path.realpath(__file__))
-
-# Construct the full paths to the files
-data_file = os.path.join(script_dir, "data.txt")
 
 
 class DejenDog:
     def __init__(self):
+        # Get file directory
+        self.data_file = base.file_path(file_name="data.txt")
+        self.config_file = base.file_path(file_name="config.json")
 
-        self.line = white + "~" * 50
+        # Initialize line
+        self.line = base.create_line(length=50)
 
-        self.banner = f"""
-        {blue}Smart Airdrop {white}DejenDog Auto Claimer
-        t.me/smartairdrop2120
-        
-        """
+        # Initialize banner
+        self.banner = base.create_banner(game_name="DejenDog")
 
-    def headers(self, auth_data):
-        return {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Authorization": f"{auth_data}",
-            "Cache-Control": "no-cache",
-            "Origin": "https://djdog.io",
-            "Pragma": "no-cache",
-            "Priority": "u=1, i",
-            "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"Windows"',
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        }
+        # Get config
+        self.auto_check_in = base.get_config(
+            config_file=self.config_file, config_name="auto-check-in"
+        )
 
-    # Clear the terminal
-    def clear_terminal(self):
-        # For Windows
-        if os.name == "nt":
-            _ = os.system("cls")
-        # For macOS and Linux
-        else:
-            _ = os.system("clear")
+        self.auto_do_task = base.get_config(
+            config_file=self.config_file, config_name="auto-do-task"
+        )
 
-    def login(self, data):
-        url = f"https://api.djdog.io/telegram/login?{data}"
+        self.auto_claim = base.get_config(
+            config_file=self.config_file, config_name="auto-claim"
+        )
 
-        headers = {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Cache-Control": "no-cache",
-            "Origin": "https://djdog.io",
-            "Pragma": "no-cache",
-            "Priority": "u=1, i",
-            "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"Windows"',
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        }
+        self.auto_buy_box = base.get_config(
+            config_file=self.config_file, config_name="auto-buy-box"
+        )
 
-        response = requests.get(url=url, headers=headers)
-
-        return response
-
-    def user_info(self, auth_data):
-        url = f"https://api.djdog.io/pet/barAmount"
-
-        headers = self.headers(auth_data=auth_data)
-
-        response = requests.get(url, headers=headers)
-
-        return response
-
-    def submit_click(self, auth_data, click):
-        url = f"https://api.djdog.io/pet/collect?clicks={click}"
-
-        headers = self.headers(auth_data=auth_data)
-
-        response = requests.post(url, headers=headers)
-
-        return response
-
-    def log(self, msg):
-        now = datetime.now().isoformat(" ").split(".")[0]
-        print(f"{black}[{now}]{reset} {msg}{reset}")
+        self.auto_buy_boost = base.get_config(
+            config_file=self.config_file, config_name="auto-buy-boost"
+        )
 
     def main(self):
         while True:
-            self.clear_terminal()
+            base.clear_terminal()
             print(self.banner)
-            data = open(data_file, "r").read().splitlines()
+            data = open(self.data_file, "r").read().splitlines()
             num_acc = len(data)
-            self.log(self.line)
-            self.log(f"{green}Numer of account: {white}{num_acc}")
+            base.log(self.line)
+            base.log(f"{base.green}Numer of accounts: {base.white}{num_acc}")
+
             for no, data in enumerate(data):
-                self.log(self.line)
-                self.log(f"{green}Account number: {white}{no+1}/{num_acc}")
+                base.log(self.line)
+                base.log(f"{base.green}Account number: {base.white}{no+1}/{num_acc}")
 
                 try:
-                    login = self.login(data=data).json()
-                    auth_data = login["data"]["accessToken"]
-                    user_info = self.user_info(auth_data=auth_data).json()
-                    hit_available = user_info["data"]["availableAmount"]
-                    balance = user_info["data"]["goldAmount"]
-                    self.log(f"{green}Balance: {white}{balance:,}")
-                    time.sleep(10)
-                    while True:
-                        self.log(f"{yellow}Trying to click...")
-                        if hit_available > 50:
-                            click = 50000
-                            try:
-                                submit_click = self.submit_click(
-                                    auth_data=auth_data, click=click
-                                ).json()
-                                success_click = submit_click["data"]["amount"]
-                                self.log(
-                                    f"{green}Click success: {white}{success_click}"
-                                )
-                                time.sleep(10)
-                                try:
-                                    user_info = self.user_info(
-                                        auth_data=auth_data
-                                    ).json()
-                                    hit_available = user_info["data"]["availableAmount"]
-                                    balance = user_info["data"]["goldAmount"]
-                                    self.log(f"{green}New balance: {white}{balance:,}")
-                                except Exception as e:
-                                    self.log(f"{red}Get balance error!!!")
-                                time.sleep(10)
-                            except Exception as e:
-                                self.log(f"{red}Click error!!!")
+                    token = get_token(data=data)
+
+                    if token:
+
+                        get_info(token=token)
+
+                        # Check in
+                        if self.auto_check_in:
+                            base.log(f"{base.yellow}Auto Check-in: {base.green}ON")
+                            process_check_in(token=token)
                         else:
-                            self.log(
-                                f"{white}Number of available clicks is less than {red}50{white}. Recovery mode: {green}ON{white}"
-                            )
-                            break
-                    wait_time = 60 * 60
+                            base.log(f"{base.yellow}Auto Check-in: {base.red}OFF")
+
+                        # Do task
+                        if self.auto_do_task:
+                            base.log(f"{base.yellow}Auto Do Task: {base.green}ON")
+                            process_do_task(token=token)
+                        else:
+                            base.log(f"{base.yellow}Auto Do Task: {base.red}OFF")
+
+                        # Claim
+                        if self.auto_claim:
+                            base.log(f"{base.yellow}Auto Claim: {base.green}ON")
+                            process_claim(token=token)
+                        else:
+                            base.log(f"{base.yellow}Auto Claim: {base.red}OFF")
+
+                        # Buy box
+                        if self.auto_buy_box:
+                            base.log(f"{base.yellow}Auto Buy Box: {base.green}ON")
+                            process_buy_box(token=token)
+                        else:
+                            base.log(f"{base.yellow}Auto Buy Box: {base.red}OFF")
+
+                        # Buy boost
+                        if self.auto_buy_boost:
+                            base.log(f"{base.yellow}Auto Buy Boost: {base.green}ON")
+                            process_buy_boost(token=token)
+                        else:
+                            base.log(f"{base.yellow}Auto Buy Boost: {base.red}OFF")
+
+                        get_info(token=token)
+
+                    else:
+                        base.log(f"{base.red}Token not found! Please get new query id")
                 except Exception as e:
-                    wait_time = 5 * 60
-                    self.log(
-                        f"{red}Get user info error, re-try after {int(wait_time/60)} minutes"
-                    )
+                    base.log(f"{base.red}Error: {base.white}{e}")
 
             print()
-            self.log(f"{yellow}Wait for {int(wait_time/60)} minutes!")
+            wait_time = 60 * 60
+            base.log(f"{base.yellow}Wait for {int(wait_time/60)} minutes!")
             time.sleep(wait_time)
 
 
